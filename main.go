@@ -5,14 +5,10 @@ import (
   "github.com/labstack/echo"
   "github.com/parnurzeal/gorequest"
   "fmt"
-  xj "github.com/basgys/goxml2json"
-  "strings"
   "github.com/labstack/echo/middleware"
   gr "github.com/PetrNavratil/diary-back/goodreads"
   "encoding/xml"
-  "github.com/davecgh/go-spew/spew"
 )
-
 
 type BookRequest struct {
   Key string `query:"key"`
@@ -35,12 +31,11 @@ func main() {
       return c.String(http.StatusBadRequest, "Parameter ID is not specified")
     }
 
-    _, body, errs := gorequest.New().Get("https://www.goodreads.com/book/show/" + bookId.Id + ".xml?key=tsRkj9chcP8omCKBCJLg0A&q=").End()
+    _, body, errs := gorequest.New().Get("https://www.goodreads.com/book/show/" + bookId.Id + ".xml?key=tsRkj9chcP8omCKBCJLg0A&").End()
     if errs == nil {
       bookInfo := &gr.GoodReadsBook{}
       xmlResponse := []byte(body)
       xml.Unmarshal(xmlResponse, bookInfo)
-      spew.Dump(bookInfo)
       return c.JSON(http.StatusOK, bookInfo)
     } else {
       return c.String(http.StatusNotFound, "FAIL")
@@ -50,21 +45,22 @@ func main() {
   e.GET("/books", func(c echo.Context) error {
 
     u := new(BookRequest)
-    fmt.Println(u)
-    if errrrror := c.Bind(u); errrrror != nil {
+    if err := c.Bind(u); err != nil {
       return c.String(http.StatusBadRequest, "FAIL")
     }
-    _, body, errs := gorequest.New().Get("https://www.goodreads.com/search/index.xml?key=tsRkj9chcP8omCKBCJLg0A&q="+u.Key).End()
+    _, body, errs := gorequest.New().Get("https://www.goodreads.com/search/index.xml?key=tsRkj9chcP8omCKBCJLg0A&q=" + u.Key).End()
     if errs == nil {
-      xml := strings.NewReader(body)
-      json, err := xj.Convert(xml)
-      if err != nil {
-        panic("That's embarrassing...")
+      foundBooks := &gr.GoodReadsSearchBookResponse{}
+      xmlResponse := []byte(body)
+      xml.Unmarshal(xmlResponse, foundBooks)
+
+      if (foundBooks.Books == nil) {
+        return c.JSON(http.StatusOK, []gr.GoodReadsSearchBook{})
+      } else {
+        return c.JSON(http.StatusOK, foundBooks.Books)
       }
 
-      final := json.String()
 
-      return c.String(http.StatusOK, final)
     } else {
       fmt.Println("error vetev")
     }

@@ -1,14 +1,6 @@
 package goodreads
 
-type Author struct {
-  Id            string  `xml:"id"`
-  Name          string `xml:"name"`
-  Role          string `xml:"role"`
-  ImageUrl      string `xml:"image_url"`
-  SmallImageUrl string `xml:"small_image_url"`
-  OriginUrl     string `xml:"link"`
-}
-
+// Get specific book models
 type GoodReadsBook struct {
   Id               string  `xml:"book>id" json:"id"`
   Title            string  `xml:"book>title" json:"title"`
@@ -31,6 +23,15 @@ type GoodReadsBook struct {
   Authors          []Author `xml:"book>authors>author"  json:"authors"`
   Series           Serie `xml:"book>series_works>series_work>series" json:"series"`
   SimilarBooks     []SimilarBook `xml:"book>similar_books>book" json:"similarBooks"`
+}
+
+type Author struct {
+  Id            string  `xml:"id"`
+  Name          string `xml:"name"`
+  Role          string `xml:"role"`
+  ImageUrl      string `xml:"image_url"`
+  SmallImageUrl string `xml:"small_image_url"`
+  OriginUrl     string `xml:"link"`
 }
 
 type Serie struct {
@@ -58,5 +59,27 @@ type SimilarBookAuthor struct {
   OriginUrl string `xml:"link" json:"originalUrl"`
 }
 
+
+// Search models
+type GoodReadsSearchBookResponse struct {
+  Books []GoodReadsSearchBook `xml:"search>results>work" json:"books"`
+}
+
+type GoodReadsSearchBook struct {
+  Id               string `xml:"best_book>id" json:"id"`
+  Title            string `xml:"best_book>title" json:"title"`
+  Author           GoodReadsBookSearchAuthor `xml:"best_book>author" json:"author"`
+  ImageUrl         string `xml:"best_book>image_url" json:"imageUrl"`
+  SmallImageUrl    string `xml:"best_book>small_image_url" json:"smallImageUrl"`
+  PublicationYear  string `xml:"original_publication_year" json:"originalPublicationYear"`
+  PublicationMonth string `xml:"original_publication_month" json:"originalPublicationMonth"`
+  PublicationDay   string `xml:"original_publication_day" json:"originalPublicationDay"`
+  AverageRating    string `xml:"average_rating" json:"averageRating"`
+}
+
+type GoodReadsBookSearchAuthor struct {
+  Id   string `xml:"id" json:"id"`
+  Name string `xml:"name" json:"name"`
+}
 
 
