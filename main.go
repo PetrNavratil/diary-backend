@@ -8,15 +8,18 @@ import (
   xj "github.com/basgys/goxml2json"
   "strings"
   "github.com/labstack/echo/middleware"
+  gr "github.com/PetrNavratil/diary-back/goodreads"
+  "encoding/xml"
+  "github.com/davecgh/go-spew/spew"
 )
 
-type User struct {
-  Name  string `json:"name" xml:"name"`
-  Email string `json:"email" xml:"email"`
-}
 
 type BookRequest struct {
   Key string `query:"key"`
+}
+
+type BookId struct {
+  Id string `query:"id"`
 }
 
 func main() {
@@ -26,6 +29,23 @@ func main() {
     return c.JSON(http.StatusNotFound, "Don't look around")
   })
 
+  e.GET("/book", func(c echo.Context) error {
+    bookId := new(BookId)
+    if err := c.Bind(bookId); err != nil {
+      return c.String(http.StatusBadRequest, "Parameter ID is not specified")
+    }
+
+    _, body, errs := gorequest.New().Get("https://www.goodreads.com/book/show/" + bookId.Id + ".xml?key=tsRkj9chcP8omCKBCJLg0A&q=").End()
+    if errs == nil {
+      bookInfo := &gr.GoodReadsBook{}
+      xmlResponse := []byte(body)
+      xml.Unmarshal(xmlResponse, bookInfo)
+      spew.Dump(bookInfo)
+      return c.JSON(http.StatusOK, bookInfo)
+    } else {
+      return c.String(http.StatusNotFound, "FAIL")
+    }
+  })
 
   e.GET("/books", func(c echo.Context) error {
 
