@@ -26,12 +26,12 @@ type GoodReadsBook struct {
 }
 
 type Author struct {
-  Id            string  `xml:"id"`
-  Name          string `xml:"name"`
-  Role          string `xml:"role"`
-  ImageUrl      string `xml:"image_url"`
-  SmallImageUrl string `xml:"small_image_url"`
-  OriginUrl     string `xml:"link"`
+  Id            string  `xml:"id" json:"id"`
+  Name          string `xml:"name" json:"name"`
+  Role          string `xml:"role" json:"role"`
+  ImageUrl      string `xml:"image_url" json:"imageUrl"`
+  SmallImageUrl string `xml:"small_image_url" json:"smallImageUrl"`
+  OriginUrl     string `xml:"link" json:"originUrl"`
 }
 
 type Serie struct {
