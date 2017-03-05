@@ -66,15 +66,11 @@ type GoodReadsSearchBookResponse struct {
 }
 
 type GoodReadsSearchBook struct {
-  Id               string `xml:"best_book>id" json:"id"`
-  Title            string `xml:"best_book>title" json:"title"`
-  Author           GoodReadsBookSearchAuthor `xml:"best_book>author" json:"author"`
-  ImageUrl         string `xml:"best_book>image_url" json:"imageUrl"`
-  SmallImageUrl    string `xml:"best_book>small_image_url" json:"smallImageUrl"`
-  PublicationYear  string `xml:"original_publication_year" json:"originalPublicationYear"`
-  PublicationMonth string `xml:"original_publication_month" json:"originalPublicationMonth"`
-  PublicationDay   string `xml:"original_publication_day" json:"originalPublicationDay"`
-  AverageRating    string `xml:"average_rating" json:"averageRating"`
+  Id       int `xml:"best_book>id" json:"id"`
+  Title    string `xml:"best_book>title" json:"title"`
+  //Author           GoodReadsBookSearchAuthor `xml:"best_book>author" json:"author"`
+  Author   string `xml:"best_book>author>name" json:"author"`
+  ImageUrl string `xml:"best_book>small_image_url" json:"imageUrl"`
 }
 
 type GoodReadsBookSearchAuthor struct {
