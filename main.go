@@ -14,10 +14,9 @@ import (
   "strings"
   "github.com/dgrijalva/jwt-go"
   "time"
-  //"github.com/davecgh/go-spew/spew"
-  //"github.com/davecgh/go-spew/spew"
   "strconv"
   "github.com/davecgh/go-spew/spew"
+  "errors"
 )
 
 type BookRequest struct {
@@ -42,7 +41,7 @@ func login(db *gorm.DB) func(c echo.Context) error {
           token := jwt.New(jwt.SigningMethodHS256)
           claims := token.Claims.(jwt.MapClaims)
           claims["id"] = existingUser.ID
-          claims["exp"] = time.Now().Add(time.Minute * 1).Unix()
+          claims["exp"] = time.Now().Add(time.Minute * 60).Unix()
 
           t, err := token.SignedString([]byte("diarySecret"))
           if err != nil {
@@ -97,19 +96,25 @@ func register(db *gorm.DB) func(c echo.Context) error {
   }
 }
 
-func getUser(c echo.Context, db *gorm.DB) models.User {
+func getUser(c echo.Context, db *gorm.DB) (models.User, error) {
   jwtContext := c.Get("user").(*jwt.Token)
   claims := jwtContext.Claims.(jwt.MapClaims)
   id := claims["id"]
   user := models.User{}
-  db.Where("id = ?", id).First(&user)
-  return user
+  if (db.Where("id = ?", id).First(&user).RecordNotFound()) {
+    return user, errors.New("NOT FOUND")
+  } else {
+    return user, nil
+  }
 }
 
 func getLoggedUser(db *gorm.DB) func(c echo.Context) error {
   return func(c echo.Context) error {
-    user := getUser(c, db)
-    return c.JSON(http.StatusOK, user)
+    if user, err := getUser(c, db); err == nil {
+      return c.JSON(http.StatusOK, user)
+    } else {
+      return c.JSON(http.StatusBadRequest, "USER NOT LOGGED")
+    }
   }
 }
 
@@ -195,29 +200,72 @@ func insertNewBook(db *gorm.DB) func(c echo.Context) error {
 func addBookToUser(db *gorm.DB) func(c echo.Context) error {
   return func(c echo.Context) error {
     userBook := &models.UserBook{}
-    book := models.Book{}
-    loggedUser := getUser(c, db)
-    if id, err := strconv.Atoi(c.Param("id")); err == nil {
-      userBook.BookID = id
-      userBook.UserID = loggedUser.ID
-      userBook.Status = true
-      db.Create(userBook)
-      return c.JSON(http.StatusOK, book)
+    returnBook := models.ReturnBook{}
+    if loggedUser, logErr := getUser(c, db); logErr == nil {
+      if id, err := strconv.Atoi(c.Param("id")); err == nil {
+        userBook.BookID = id
+        userBook.UserID = loggedUser.ID
+        userBook.Status = false
+        db.Create(&userBook)
+        db.Table("books").Select(
+          "books.id, books.title, books.author, books.image_url, user_book.status").
+          Joins("JOIN user_book ON user_book.book_id = books.id").Where("user_id = ? AND book_id = ?", loggedUser.ID, id).Scan(&returnBook)
+        spew.Dump(returnBook)
+        return c.JSON(http.StatusOK, returnBook)
+      } else {
+        return c.JSON(http.StatusBadRequest, map[string]string{"message":  "FAIL"})
+      }
     } else {
-      return c.JSON(http.StatusBadRequest, map[string]string{"message":  "FAIL"})
+      fmt.Println(loggedUser)
+      return c.JSON(http.StatusBadRequest, map[string]string{"message":  logErr.Error()})
     }
   }
 }
 
 func getUsersBooks(db *gorm.DB) func(c echo.Context) error {
   return func(c echo.Context) error {
-    user := getUser(c, db)
-    //userBook:= &[]models.UserBook{}
-    books := &[]models.Book{}
-    //db.Joins("JOIN books on books.id = user_book.book_id").Where("user_books.user_id = ?", user.ID).Find(&books)
-    db.Joins("JOIN user_book ON user_book.book_id = books.id").Where("user_id = ?", user.ID).Find(&books)
-    spew.Dump(books)
-    return c.JSON(http.StatusOK, books)
+    returnBooks := []models.ReturnBook{}
+    if user, err := getUser(c, db); err == nil {
+      db.Table("books").Select(
+        "books.id, books.title, books.author, books.image_url, user_book.status").
+        Joins("JOIN user_book ON user_book.book_id = books.id").Where("user_id = ?", user.ID).Scan(&returnBooks)
+      return c.JSON(http.StatusOK, returnBooks)
+    } else {
+      return c.JSON(http.StatusBadRequest, map[string]string{"message":  err.Error()})
+    }
+  }
+}
+
+func removeBookFromUser(db *gorm.DB) func(c echo.Context) error {
+  return func(c echo.Context) error {
+    if id, err := strconv.Atoi(c.Param("id")); err == nil {
+      if user, err := getUser(c, db); err == nil {
+        db.Where("user_id = ? AND  book_id = ?", user.ID, id).Delete(models.UserBook{})
+        return c.JSON(http.StatusOK, map[string]int{"id": id})
+      } else {
+        return c.JSON(http.StatusBadRequest, map[string]string{"message":  err.Error()})
+      }
+    } else {
+      return c.JSON(http.StatusBadRequest, "BAD ID")
+    }
+  }
+}
+
+func changeStatus(db *gorm.DB) func(c echo.Context) error {
+  return func(c echo.Context) error {
+    body := &models.ReturnBook{}
+    if id, err := strconv.Atoi(c.Param("id")); err == nil {
+      if user, err := getUser(c, db); err == nil {
+        if err := c.Bind(body); err != nil {
+          return c.JSON(http.StatusBadRequest, map[string]string{"message":  "invalid book"})
+        }
+        return c.JSON(http.StatusOK, map[string]int{"id": id})
+      } else {
+        return c.JSON(http.StatusBadRequest, map[string]string{"message":  err.Error()})
+      }
+    } else {
+      return c.JSON(http.StatusBadRequest, map[string]string{"message":  "invalid id"})
+    }
   }
 }
 
@@ -229,9 +277,11 @@ func main() {
   //db.DropTable(&models.Book{})
   //db.DropTable(&models.UserBook{})
   //
+  //
   //db.CreateTable(&models.User{})
   //db.CreateTable(&models.Book{})
   //db.CreateTable(&models.UserBook{})
+  //db.CreateTable(&models.Comment{})
 
 
   defer db.Close()
@@ -263,8 +313,10 @@ func main() {
   e.GET("/book/:id", getGRBook(db))
   e.POST("/book", insertNewBook(db))
 
-  e.POST("books/:id", addBookToUser(db))
-  e.GET("books", getUsersBooks(db))
+  e.POST("/books/:id", addBookToUser(db))
+  e.DELETE("/books/:id", removeBookFromUser(db))
+  e.PUT("/books/:id", changeStatus(db))
+  e.GET("/books", getUsersBooks(db))
 
   e.Logger.Fatal(e.Start(":1323"))
 }

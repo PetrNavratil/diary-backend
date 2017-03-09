@@ -10,6 +10,15 @@ type Book struct {
   GRBookId     int `json:"grBookId"`
   GoogleBookId int `json:"googleBookId"`
   UserBook     []UserBook `json:"-" gorm:"ForeignKey:BookID"`
+  Comments     []Comment `json:"comments" gorm:"ForeignKey:BookID"`
+}
+
+type Comment struct {
+  ID     int `json:"id"`
+  Title  string `json:"title"`
+  BookID int `json:"bookId"`
+  UserId int `json:"userId"`
+  Text   string `json:"text"`
 }
 
 type User struct {
@@ -37,4 +46,12 @@ type UserBook struct {
 
 func (*UserBook) TableName() string {
   return "user_book"
+}
+
+type ReturnBook struct {
+  ID       int `json:"id"`
+  Title    string `json:"title"`
+  Author   string `json:"author"`
+  ImageUrl string `json:"imageUrl"`
+  Status   bool `json:"status"`
 }

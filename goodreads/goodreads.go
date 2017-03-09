@@ -70,7 +70,7 @@ type GoodReadsSearchBook struct {
   Title    string `xml:"best_book>title" json:"title"`
   //Author           GoodReadsBookSearchAuthor `xml:"best_book>author" json:"author"`
   Author   string `xml:"best_book>author>name" json:"author"`
-  ImageUrl string `xml:"best_book>small_image_url" json:"imageUrl"`
+  ImageUrl string `xml:"best_book>image_url" json:"imageUrl"`
 }
 
 type GoodReadsBookSearchAuthor struct {
