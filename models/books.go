@@ -10,7 +10,7 @@ type Book struct {
   GRBookId     int `json:"grBookId"`
   GoogleBookId int `json:"googleBookId"`
   UserBook     []UserBook `json:"-" gorm:"ForeignKey:BookID"`
-  Comments     []Comment `json:"comments" gorm:"ForeignKey:BookID"`
+  Comments     []Comment `json:"-" gorm:"ForeignKey:BookID"`
 }
 
 type Comment struct {
@@ -38,10 +38,11 @@ type Shelf struct {
 }
 
 type UserBook struct {
-  ID     int
-  UserID int
-  BookID int
-  Status bool
+  ID      int
+  UserID  int
+  BookID  int
+  Status  int
+  InBooks bool
 }
 
 func (*UserBook) TableName() string {
@@ -53,5 +54,13 @@ type ReturnBook struct {
   Title    string `json:"title"`
   Author   string `json:"author"`
   ImageUrl string `json:"imageUrl"`
-  Status   bool `json:"status"`
+  InBooks  bool `json:"inBooks"`
+  Status   int `json:"status"`
+
 }
+
+const (
+  NOT_READ int = iota
+  TO_READ
+  READING
+)
