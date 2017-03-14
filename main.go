@@ -30,6 +30,7 @@ func main() {
   //db.DropTable(&models.User{})
   //db.DropTable(&models.Book{})
   //db.DropTable(&models.UserBook{})
+  //db.DropTable(&models.Comment{})
   //
   //
   //db.CreateTable(&models.User{})
@@ -77,6 +78,11 @@ func main() {
   e.PUT("/books/:id", diary_handlers.UpdateUserBookDetail(db))
   e.GET("/books/:id", diary_handlers.GetUserBookDetail(db))
   e.GET("/books", diary_handlers.GetUsersBooks(db))
+
+  e.GET("/comments", diary_handlers.GetBookComments(db))
+  e.POST("/comments", diary_handlers.AddBookComment(db))
+  e.DELETE("/comments/:id", diary_handlers.DeleteBookComment(db))
+  e.PUT("/comments/:id", diary_handlers.UpdateBookComment(db))
 
   e.Logger.Fatal(e.Start(":1323"))
 }

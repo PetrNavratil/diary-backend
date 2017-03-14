@@ -15,10 +15,20 @@ type Book struct {
 
 type Comment struct {
   ID     int `json:"id"`
-  Title  string `json:"title"`
   BookID int `json:"bookId"`
-  UserId int `json:"userId"`
+  UserID int `json:"userId"`
   Text   string `json:"text"`
+  Date   string `json:"date"`
+}
+
+type CommentResponse struct {
+  ID       int `json:"id"`
+  BookID   int `json:"bookId"`
+  Text     string `json:"text"`
+  Date     string `json:"date"`
+  Avatar   string `json:"userAvatar"`
+  UserName string `json:"userName"`
+  UserId   int `json:"userId"`
 }
 
 type User struct {
@@ -64,3 +74,10 @@ const (
   TO_READ
   READING
 )
+
+type BookComment struct {
+  Text   string `json:"text"`
+  Title  string `json:"title"`
+  BookId int `json:"bookId"`
+  Date   string `json:"date"`
+}
