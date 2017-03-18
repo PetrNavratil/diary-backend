@@ -48,25 +48,40 @@ type Shelf struct {
 }
 
 type UserBook struct {
-  ID      int
-  UserID  int
-  BookID  int
-  Status  int
-  InBooks bool
+  ID          int
+  UserID      int
+  BookID      int
+  Status      int
+  InBooks     bool
+  Educational Educational
 }
 
 func (*UserBook) TableName() string {
   return "user_book"
 }
 
-type ReturnBook struct {
-  ID       int `json:"id"`
-  Title    string `json:"title"`
-  Author   string `json:"author"`
-  ImageUrl string `json:"imageUrl"`
-  InBooks  bool `json:"inBooks"`
-  Status   int `json:"status"`
+type Educational struct {
+  ID         int `json:"id"`
+  UserBookID int `json:"-"`
+  Druh       string `json:"druh"`
+  Zanr       string `json:"zanr"`
+  Smer       string `json:"smer"`
+  Forma      string `json:"forma"`
+  Jazyk      string `json:"jazyk"`
+  Postavy    string `json:"postavy"`
+  Obsah      string `json:"obsah"`
+  Tema       string `json:"tema"`
+  Hodnoceni  string `json:"hodnoceni"`
+}
 
+type ReturnBook struct {
+  ID          int `json:"id"`
+  Title       string `json:"title"`
+  Author      string `json:"author"`
+  ImageUrl    string `json:"imageUrl"`
+  InBooks     bool `json:"inBooks"`
+  Status      int `json:"status"`
+  Educational Educational `json:"educational"`
 }
 
 const (
@@ -80,4 +95,11 @@ type BookComment struct {
   Title  string `json:"title"`
   BookId int `json:"bookId"`
   Date   string `json:"date"`
+}
+
+type Shelve struct {
+  ID      int `json:"id"`
+  Name    string `json:"id"`
+  Visible bool `json:"visible"`
+  Books   []Book `json:"books"`
 }

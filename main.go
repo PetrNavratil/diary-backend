@@ -27,16 +27,17 @@ func main() {
 
   db, _ := gorm.Open("sqlite3", "/tmp/gorm.db")
   db.LogMode(true)
-  //db.DropTable(&models.User{})
-  //db.DropTable(&models.Book{})
-  //db.DropTable(&models.UserBook{})
-  //db.DropTable(&models.Comment{})
-  //
-  //
-  //db.CreateTable(&models.User{})
-  //db.CreateTable(&models.Book{})
-  //db.CreateTable(&models.UserBook{})
-  //db.CreateTable(&models.Comment{})
+  db.DropTable(&models.User{})
+  db.DropTable(&models.Book{})
+  db.DropTable(&models.UserBook{})
+  db.DropTable(&models.Comment{})
+  db.DropTable(&models.Educational{})
+
+  db.CreateTable(&models.User{})
+  db.CreateTable(&models.Book{})
+  db.CreateTable(&models.UserBook{})
+  db.CreateTable(&models.Comment{})
+  db.CreateTable(&models.Educational{})
 
 
   defer db.Close()
