@@ -64,7 +64,7 @@ func Register(db *gorm.DB) func(c echo.Context) error {
         token := jwt.New(jwt.SigningMethodHS256)
         claims := token.Claims.(jwt.MapClaims)
         claims["id"] = existingUser.ID
-        claims["exp"] = time.Now().Add(time.Minute * 10).Unix()
+        claims["exp"] = time.Now().Add(time.Minute * 60).Unix()
 
         t, err := token.SignedString([]byte("diarySecret"))
         if err != nil {

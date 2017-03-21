@@ -27,17 +27,19 @@ func main() {
 
   db, _ := gorm.Open("sqlite3", "/tmp/gorm.db")
   db.LogMode(true)
-  db.DropTable(&models.User{})
-  db.DropTable(&models.Book{})
-  db.DropTable(&models.UserBook{})
-  db.DropTable(&models.Comment{})
-  db.DropTable(&models.Educational{})
-
-  db.CreateTable(&models.User{})
-  db.CreateTable(&models.Book{})
-  db.CreateTable(&models.UserBook{})
-  db.CreateTable(&models.Comment{})
-  db.CreateTable(&models.Educational{})
+  //db.DropTable(&models.User{})
+  //db.DropTable(&models.Book{})
+  //db.DropTable(&models.UserBook{})
+  //db.DropTable(&models.Comment{})
+  //db.DropTable(&models.Educational{})
+  //db.DropTable(&models.Shelf{})
+  //
+  //db.CreateTable(&models.User{})
+  //db.CreateTable(&models.Book{})
+  //db.CreateTable(&models.UserBook{})
+  //db.CreateTable(&models.Comment{})
+  //db.CreateTable(&models.Educational{})
+  //db.CreateTable(&models.Shelf{})
 
 
   defer db.Close()
@@ -84,6 +86,14 @@ func main() {
   e.POST("/comments", diary_handlers.AddBookComment(db))
   e.DELETE("/comments/:id", diary_handlers.DeleteBookComment(db))
   e.PUT("/comments/:id", diary_handlers.UpdateBookComment(db))
+
+  e.GET("/shelves", diary_handlers.GetUsersShelves(db))
+  e.POST("/shelves", diary_handlers.CreateNewShelf(db))
+  e.DELETE("/shelves/:id", diary_handlers.RemoveShelf(db))
+  e.PUT("/shelves/:id", diary_handlers.EditShelf(db))
+
+  e.POST("/shelves/:id", diary_handlers.AddBookToShelf(db))
+  e.DELETE("/shelves/:id/:bookId", diary_handlers.RemoveBookFromShelf(db))
 
   e.Logger.Fatal(e.Start(":1323"))
 }

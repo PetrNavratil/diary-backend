@@ -40,11 +40,7 @@ type User struct {
   LastName  string `json:"lastName"`
   Avatar    string `json:"avatar"`
   UserBook  []UserBook `json:"-" gorm:"ForeignKey:UserID"`
-}
-
-type Shelf struct {
-  Name    string `json:"name"`
-  Visible bool `json:"visible"`
+  Shelves   []Shelf `json:"-"`
 }
 
 type UserBook struct {
@@ -97,9 +93,10 @@ type BookComment struct {
   Date   string `json:"date"`
 }
 
-type Shelve struct {
+type Shelf struct {
   ID      int `json:"id"`
-  Name    string `json:"id"`
+  Name    string `json:"name"`
   Visible bool `json:"visible"`
-  Books   []Book `json:"books"`
+  UserID  int `json:"-"`
+  Books   []Book `json:"books" gorm:"many2many:shelf_books;"`
 }
