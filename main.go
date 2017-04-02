@@ -27,20 +27,25 @@ func main() {
 
   db, _ := gorm.Open("sqlite3", "/tmp/gorm.db")
   db.LogMode(true)
-  //db.DropTable(&models.User{})
-  //db.DropTable(&models.Book{})
-  //db.DropTable(&models.UserBook{})
-  //db.DropTable(&models.Comment{})
-  //db.DropTable(&models.Educational{})
-  //db.DropTable(&models.Shelf{})
-  //
-  //db.CreateTable(&models.User{})
-  //db.CreateTable(&models.Book{})
-  //db.CreateTable(&models.UserBook{})
-  //db.CreateTable(&models.Comment{})
-  //db.CreateTable(&models.Educational{})
-  //db.CreateTable(&models.Shelf{})
+  db.DropTable(&models.User{})
+  db.DropTable(&models.Book{})
+  db.DropTable(&models.UserBook{})
+  db.DropTable(&models.Comment{})
+  db.DropTable(&models.Educational{})
+  db.DropTable(&models.Shelf{})
+  db.DropTable(&models.Tracking{})
+  db.DropTable(&models.Reading{})
+  db.DropTable(&models.Interval{})
 
+  db.CreateTable(&models.User{})
+  db.CreateTable(&models.Book{})
+  db.CreateTable(&models.UserBook{})
+  db.CreateTable(&models.Comment{})
+  db.CreateTable(&models.Educational{})
+  db.CreateTable(&models.Shelf{})
+  db.CreateTable(&models.Tracking{})
+  db.CreateTable(&models.Reading{})
+  db.CreateTable(&models.Interval{})
 
   defer db.Close()
 
@@ -94,6 +99,11 @@ func main() {
 
   e.POST("/shelves/:id", diary_handlers.AddBookToShelf(db))
   e.DELETE("/shelves/:id/:bookId", diary_handlers.RemoveBookFromShelf(db))
+
+  e.PUT("/tracking/start/:id", diary_handlers.StartTracking(db))
+  e.PUT("/tracking/stop/:id", diary_handlers.StopTracking(db))
+  e.GET("/tracking/book/:id", diary_handlers.GetUserBookTracking(db))
+  e.GET("/tracking", diary_handlers.GetLastTracking(db))
 
   e.Logger.Fatal(e.Start(":1323"))
 }

@@ -1,5 +1,7 @@
 package models
 
+import "time"
+
 type Book struct {
   ID           int `json:"id"`
   Title        string `gorm:"index" json:"title"`
@@ -11,6 +13,8 @@ type Book struct {
   GoogleBookId int `json:"googleBookId"`
   UserBook     []UserBook `json:"-" gorm:"ForeignKey:BookID"`
   Comments     []Comment `json:"-" gorm:"ForeignKey:BookID"`
+  Trackings    []Tracking `json:"-" gorm:"ForeignKey:BookID"`
+  Readings     []Reading `json:"-" gorm:"ForeignKey:BookID"`
 }
 
 type Comment struct {
@@ -41,6 +45,8 @@ type User struct {
   Avatar    string `json:"avatar"`
   UserBook  []UserBook `json:"-" gorm:"ForeignKey:UserID"`
   Shelves   []Shelf `json:"-"`
+  Trackings []Tracking `json:"-" gorm:"ForeignKey:UserID"`
+  Readings  []Reading `json:"-" gorm:"ForeignKey:UserID"`
 }
 
 type UserBook struct {
@@ -50,6 +56,7 @@ type UserBook struct {
   Status      int
   InBooks     bool
   Educational Educational
+  CreatedAt   time.Time
 }
 
 func (*UserBook) TableName() string {
@@ -78,12 +85,14 @@ type ReturnBook struct {
   InBooks     bool `json:"inBooks"`
   Status      int `json:"status"`
   Educational Educational `json:"educational"`
+  CreatedAt   time.Time `json:"createdAt"`
 }
 
 const (
   NOT_READ int = iota
   TO_READ
   READING
+  READ
 )
 
 type BookComment struct {
@@ -99,4 +108,52 @@ type Shelf struct {
   Visible bool `json:"visible"`
   UserID  int `json:"-"`
   Books   []Book `json:"books" gorm:"many2many:shelf_books;"`
+}
+
+type Tracking struct {
+  ID     int `json:"id"`
+  UserID int `json:"userId"`
+  BookID int `json:"bookId"`
+  Start  time.Time `json:"start"`
+  End    time.Time `json:"end"`
+}
+
+type LastTracking struct {
+  Tracking
+  Title  string `json:"title"`
+  Author string `json:"author"`
+}
+
+type ReturnTracking struct {
+  LastTracking LastTracking `json:"lastTracking"`
+  Trackings    []Tracking `json:"trackings"`
+}
+
+type Reading struct {
+  ID        int `json:"id"`
+  UserID    int `json:"userId"`
+  BookID    int `json:"bookId"`
+  Completed bool `json:"completed"`
+  Start     time.Time `json:"start"`
+  Stop      time.Time `json:"stop"`
+  Intervals []Interval `json:"intervals"`
+}
+
+type Interval struct {
+  ID        int `json:"id"`
+  Start     time.Time `json:"start"`
+  Stop      time.Time `json:"stop"`
+  ReadingID int `json:"readingId"`
+}
+
+type LastInterval struct {
+  Interval
+  Title     string `json:"title"`
+  Author    string `json:"author"`
+  Completed bool `json:"completed"`
+}
+
+type ReturnReading struct {
+  LastInterval LastInterval `json:"lastInterval"`
+  Readings     []Reading `json:"readings"`
 }
