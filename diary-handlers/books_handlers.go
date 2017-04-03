@@ -104,10 +104,48 @@ func UpdateUserBookDetail(db *gorm.DB) func(c echo.Context) error {
   return func(c echo.Context) error {
     currentBook := models.UserBook{}
     updated := &models.ReturnBook{}
+    reading := models.Reading{}
+    interval := models.Interval{}
     if loggedUser, logErr := GetUser(c, db); logErr == nil {
       if id, err := strconv.Atoi(c.Param("id")); err == nil {
         if bodyError := c.Bind(updated); bodyError == nil {
           db.Where("user_id = ? AND book_id = ?", loggedUser.ID, id).First(&currentBook)
+          // ma se vytvorit reading status?
+          if updated.Status == models.READING && currentBook.Status != models.READING {
+            reading.UserID = loggedUser.ID
+            reading.BookID = id
+            reading.Completed = false
+            reading.Start = time.Now()
+            db.Create(&reading)
+            fmt.Println("CREATED NEW READING FOR BOOK")
+          }
+          // ma se to hodit do READ?
+          if updated.Status == models.READ && currentBook.Status != models.READ {
+            // cte se to aktualne?
+            if currentBook.Status == models.READING {
+              db.Where("user_id = ? AND book_id = ? AND completed = ?", loggedUser.ID, id, false).Last(&reading)
+              // je to trackovane?
+              if !db.Where("reading_id = ?", reading.ID).Last(&interval).RecordNotFound() {
+                if interval.Stop.IsZero() {
+                  interval.Stop = time.Now()
+                  db.Save(&interval)
+                  reading.Stop = interval.Stop
+                }
+              } else {
+                reading.Stop = time.Now()
+              }
+              reading.Completed = true
+              db.Save(&reading)
+            } else {
+              // necetlo se to, dej insta read
+              reading.UserID = loggedUser.ID
+              reading.BookID = id
+              reading.Completed = true
+              reading.Start = time.Now()
+              reading.Stop = reading.Start
+              db.Create(&reading)
+            }
+          }
           currentBook.Status = updated.Status
           currentBook.Educational = updated.Educational
           db.Save(&currentBook)

@@ -151,6 +151,7 @@ type LastInterval struct {
   Title     string `json:"title"`
   Author    string `json:"author"`
   Completed bool `json:"completed"`
+  BookID    int `json:"bookId"`
 }
 
 type ReturnReading struct {

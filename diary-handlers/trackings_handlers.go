@@ -7,8 +7,8 @@ import (
   "strconv"
   "github.com/PetrNavratil/diary-back/models"
   "time"
-  "github.com/davecgh/go-spew/spew"
   "fmt"
+  "github.com/davecgh/go-spew/spew"
 )
 
 func StartTracking(db *gorm.DB) func(c echo.Context) error {
@@ -19,6 +19,7 @@ func StartTracking(db *gorm.DB) func(c echo.Context) error {
     interval := models.Interval{}
     lastInterval := models.LastInterval{}
     intervals := []models.Interval{}
+    returnReading := models.ReturnReading{}
     if user, err := GetUser(c, db); err == nil {
       if id, idErr := strconv.Atoi(c.Param("id")); idErr == nil {
         if !db.Where("book_id = ? AND user_id = ?", id, user.ID).First(&userBook).RecordNotFound() {
@@ -27,7 +28,6 @@ func StartTracking(db *gorm.DB) func(c echo.Context) error {
             interval.Stop = time.Now()
             db.Save(&interval)
             fmt.Println("ENDING PREVIOUS READING")
-            spew.Dump(interval)
           } else {
             fmt.Println("NO LAST TRACKING")
           }
@@ -44,7 +44,6 @@ func StartTracking(db *gorm.DB) func(c echo.Context) error {
           } else {
             db.Where("user_id = ? AND book_id = ?", user.ID, id).Last(&reading)
           }
-          spew.Dump(&reading)
           interval = models.Interval{}
           interval.Start = time.Now()
           interval.ReadingID = reading.ID
@@ -54,10 +53,16 @@ func StartTracking(db *gorm.DB) func(c echo.Context) error {
           lastInterval.Title = book.Title
           lastInterval.Author = book.Author
           lastInterval.Completed = false
+          lastInterval.BookID = book.ID
           db.Find(&intervals)
-          spew.Dump(intervals)
-          return c.JSON(http.StatusOK, lastInterval)
-
+          getReadings, _ := strconv.ParseBool(c.QueryParam("getReadings"))
+          if getReadings {
+            returnReading.LastInterval = lastInterval
+            returnReading.Readings = getUserBookReadings(db, user.ID, id)
+            return c.JSON(http.StatusOK, returnReading)
+          } else {
+            return c.JSON(http.StatusOK, lastInterval)
+          }
         } else {
           return c.JSON(http.StatusBadRequest, map[string]string{"message":  "Bad book id"})
         }
@@ -86,12 +91,15 @@ func StopTracking(db *gorm.DB) func(c echo.Context) error {
           lastInterval.Title = book.Title
           lastInterval.Author = book.Author
           lastInterval.Completed = true
-          db.Where("user_id = ? and book_id = ?", user.ID, book.ID).Find(&returnReading.Readings)
-          for i := range returnReading.Readings {
-            db.Model(&returnReading.Readings[i]).Related(&returnReading.Readings[i].Intervals, "Intervals")
+          lastInterval.BookID = book.ID
+          getReadings, _ := strconv.ParseBool(c.QueryParam("getReadings"))
+          if getReadings {
+            returnReading.LastInterval = lastInterval
+            returnReading.Readings = getUserBookReadings(db, user.ID, id)
+            return c.JSON(http.StatusOK, returnReading)
+          } else {
+            return c.JSON(http.StatusOK, lastInterval)
           }
-          returnReading.LastInterval = lastInterval
-          return c.JSON(http.StatusOK, returnReading)
         } else {
           return c.JSON(http.StatusBadRequest, map[string]string{"message":  "Bad book id"})
         }
@@ -107,15 +115,12 @@ func StopTracking(db *gorm.DB) func(c echo.Context) error {
 func GetUserBookTracking(db *gorm.DB) func(c echo.Context) error {
   return func(c echo.Context) error {
     book := models.Book{}
-    returnReading := models.ReturnReading{}
+    readings := []models.Reading{}
     if user, err := GetUser(c, db); err == nil {
       if id, idErr := strconv.Atoi(c.Param("id")); idErr == nil {
         if !db.Where("id = ?", id).First(&book).RecordNotFound() {
-          db.Where("user_id = ? AND book_id = ?", user.ID, id).Find(&returnReading.Readings)
-          for i := range returnReading.Readings {
-            db.Model(&returnReading.Readings[i]).Related(&returnReading.Readings[i].Intervals, "Intervals")
-          }
-          return c.JSON(http.StatusOK, returnReading)
+          readings = getUserBookReadings(db, user.ID, id)
+          return c.JSON(http.StatusOK, readings)
         } else {
           return c.JSON(http.StatusBadRequest, map[string]string{"message":  "Bad book id"})
         }
@@ -134,11 +139,13 @@ func GetLastTracking(db *gorm.DB) func(c echo.Context) error {
     reading := models.Reading{}
     lastInterval := models.LastInterval{}
     if user, err := GetUser(c, db); err == nil {
-      db.Table("intervals").Joins("JOIN readings on intervals.reading_id = readings.id").Where("user_id = ? AND completed = ?", user.ID, false).Last(&lastInterval.Interval)
-      db.Where("id = ?", lastInterval.ID).First(&reading)
+      db.Table("intervals").Joins("JOIN readings on intervals.reading_id = readings.id").Where("user_id = ?", user.ID).Last(&lastInterval.Interval)
+      db.Where("id = ?", lastInterval.ReadingID).First(&reading)
+      spew.Dump(reading)
       db.Where("id = ?", reading.BookID).First(&book)
       lastInterval.Author = book.Author
       lastInterval.Title = book.Title
+      lastInterval.BookID = book.ID
       if lastInterval.Stop.IsZero() {
         lastInterval.Completed = false
       } else {
@@ -149,4 +156,13 @@ func GetLastTracking(db *gorm.DB) func(c echo.Context) error {
       return c.JSON(http.StatusBadRequest, map[string]string{"message":  err.Error()})
     }
   }
+}
+
+func getUserBookReadings(db *gorm.DB, userId int, bookId int) []models.Reading {
+  readings := []models.Reading{}
+  db.Where("user_id = ? AND book_id = ?", userId, bookId).Find(&readings)
+  for i := range readings {
+    db.Model(&readings[i]).Related(&readings[i].Intervals, "Intervals")
+  }
+  return readings
 }
