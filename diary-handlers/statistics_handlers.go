@@ -6,6 +6,8 @@ import (
   "net/http"
   "github.com/PetrNavratil/diary-back/models"
   "time"
+  "strconv"
+  "fmt"
 )
 
 func GetUserStatistic(db *gorm.DB) func(c echo.Context) error {
@@ -54,6 +56,41 @@ func GetUserStatistic(db *gorm.DB) func(c echo.Context) error {
       db.Where("id = ?", mostReadBook.BookID).First(&statistic.MostlyReadBook.Book)
       statistic.TimeSpentReading = statistic.TimeSpentReading / 1e6;
       return c.JSON(http.StatusOK, statistic)
+    } else {
+      return c.JSON(http.StatusBadRequest, map[string]string{"message":  err.Error()})
+    }
+  }
+}
+
+func GetIntervals(db *gorm.DB) func(c echo.Context) error {
+  return func(c echo.Context) error {
+    intervals := []models.StatisticInterval{}
+    if user, err := GetUser(c, db); err == nil {
+      if month, monthErr := strconv.Atoi(c.QueryParam("month")); monthErr == nil {
+        if year, yearErr := strconv.Atoi(c.QueryParam("year")); yearErr == nil {
+          db.Table("readings").
+            Select("intervals.stop, intervals.start, readings.book_id, books.title, books.author").
+            Joins("JOIN intervals ON readings.id = intervals.reading_id").
+            Joins("JOIN books ON readings.book_id = books.id").
+            Where("readings.user_id = ? AND" +
+            "(" +
+            "(strftime('%Y', intervals.start) = ? AND strftime('%m', intervals.start) = ?)" +
+            "OR" +
+            "(strftime('%Y', intervals.stop) = ? AND strftime('%m', intervals.stop) = ?)" +
+            ")", user.ID, strconv.Itoa(year), fmt.Sprintf("%02d", month), strconv.Itoa(year), fmt.Sprintf("%02d", month)).
+            Scan(&intervals)
+          for i := range intervals {
+            if !intervals[i].Stop.IsZero() {
+              intervals[i].Completed = true
+            }
+          }
+          return c.JSON(http.StatusOK, intervals)
+        } else {
+          return c.JSON(http.StatusBadRequest, map[string]string{"message":  "month required"})
+        }
+      } else {
+        return c.JSON(http.StatusBadRequest, map[string]string{"message":  "month required"})
+      }
     } else {
       return c.JSON(http.StatusBadRequest, map[string]string{"message":  err.Error()})
     }

@@ -112,5 +112,7 @@ func main() {
   e.GET("/readings", diary_handlers.GetAllUsersReadings(db))
   e.GET("/statistic", diary_handlers.GetUserStatistic(db))
 
+  e.GET("/intervals", diary_handlers.GetIntervals(db))
+
   e.Logger.Fatal(e.Start(":1323"))
 }

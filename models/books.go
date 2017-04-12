@@ -184,3 +184,12 @@ type MostlyRead struct {
   Book
   Read int `json:"read"`
 }
+
+type StatisticInterval struct {
+  Start     time.Time `json:"start"`
+  Stop      time.Time `json:"stop"`
+  BookID    int `json:"bookId"`
+  Title     string `json:"title"`
+  Author    string `json:"author"`
+  Completed bool `json:"completed"`
+}
