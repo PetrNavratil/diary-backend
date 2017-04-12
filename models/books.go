@@ -139,6 +139,12 @@ type Reading struct {
   Intervals []Interval `json:"intervals"`
 }
 
+type StatisticReading struct {
+  Reading
+  Title  string `json:"title"`
+  Author string `json:"author"`
+}
+
 type Interval struct {
   ID        int `json:"id"`
   Start     time.Time `json:"start"`
@@ -157,4 +163,24 @@ type LastInterval struct {
 type ReturnReading struct {
   LastInterval LastInterval `json:"lastInterval"`
   Readings     []Reading `json:"readings"`
+}
+
+type PasswordChange struct {
+  OldPassword string `json:"oldPassword"`
+  NewPassword string `json:"newPassword"`
+}
+
+type Statistic struct {
+  BooksCount       int `json:"booksCount"`
+  BooksRead        int `json:"booksRead"`
+  BooksReading     int `json:"booksReading"`
+  BooksToRead      int `json:"booksToRead"`
+  BooksNotRead     int `json:"booksNotRead"`
+  TimeSpentReading int64 `json:"timeSpentReading"`
+  MostlyReadBook   MostlyRead `json:"mostlyRead"`
+}
+
+type MostlyRead struct {
+  Book
+  Read int `json:"read"`
 }

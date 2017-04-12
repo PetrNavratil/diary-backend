@@ -7,6 +7,7 @@ import (
   "github.com/dgrijalva/jwt-go"
   "net/http"
   "errors"
+  "strconv"
 )
 
 func GetUser(c echo.Context, db *gorm.DB) (models.User, error) {
@@ -27,6 +28,30 @@ func GetLoggedUser(db *gorm.DB) func(c echo.Context) error {
       return c.JSON(http.StatusOK, user)
     } else {
       return c.JSON(http.StatusBadRequest, "USER NOT LOGGED")
+    }
+  }
+}
+
+func EditUser(db *gorm.DB) func(c echo.Context) error {
+  return func(c echo.Context) error {
+    currentUser := models.User{}
+    updatedUser := models.User{}
+    if id, idErr := strconv.Atoi(c.Param("id")); idErr == nil {
+      if bodyError := c.Bind(&updatedUser); bodyError == nil {
+        if !db.Where("id = ?", id).First(&currentUser).RecordNotFound() {
+          currentUser.Email = updatedUser.Email
+          currentUser.LastName = updatedUser.LastName
+          currentUser.FirstName = updatedUser.FirstName
+          db.Save(&currentUser)
+          return c.JSON(http.StatusOK, updatedUser);
+        } else {
+          return c.JSON(http.StatusBadRequest, map[string]string{"message":  "Bad user id"})
+        }
+      } else {
+        return c.JSON(http.StatusBadRequest, map[string]string{"message":  "Bad user body"})
+      }
+    } else {
+      return c.JSON(http.StatusBadRequest, map[string]string{"message":  "Bad user id"})
     }
   }
 }

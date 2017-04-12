@@ -25,7 +25,7 @@ func getAllBoks(db *gorm.DB) func(c echo.Context) error {
 
 func main() {
 
-  db, _ := gorm.Open("sqlite3", "/tmp/gorm.db")
+  db, _ := gorm.Open("sqlite3", "gorm.db")
   db.LogMode(true)
   //db.DropTable(&models.User{})
   //db.DropTable(&models.Book{})
@@ -70,7 +70,11 @@ func main() {
   })
   e.POST("/login", diary_handlers.Login(db))
   e.POST("/register", diary_handlers.Register(db))
+  e.POST("/password", diary_handlers.ChangePassword(db))
   e.GET("/user", diary_handlers.GetLoggedUser(db))
+  e.PUT("/user/:id", diary_handlers.EditUser(db))
+
+
 
   // gets GR book
   e.GET("/book-detail/:id", diary_handlers.GetGRBook(db))
@@ -104,6 +108,9 @@ func main() {
   e.PUT("/tracking/stop/:id", diary_handlers.StopTracking(db))
   e.GET("/tracking/book/:id", diary_handlers.GetUserBookTracking(db))
   e.GET("/tracking", diary_handlers.GetLastTracking(db))
+
+  e.GET("/readings", diary_handlers.GetAllUsersReadings(db))
+  e.GET("/statistic", diary_handlers.GetUserStatistic(db))
 
   e.Logger.Fatal(e.Start(":1323"))
 }

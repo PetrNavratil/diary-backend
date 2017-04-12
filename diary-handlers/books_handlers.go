@@ -126,10 +126,13 @@ func UpdateUserBookDetail(db *gorm.DB) func(c echo.Context) error {
               db.Where("user_id = ? AND book_id = ? AND completed = ?", loggedUser.ID, id, false).Last(&reading)
               // je to trackovane?
               if !db.Where("reading_id = ?", reading.ID).Last(&interval).RecordNotFound() {
+                // cte se to prave ted?
                 if interval.Stop.IsZero() {
                   interval.Stop = time.Now()
                   db.Save(&interval)
                   reading.Stop = interval.Stop
+                } else {
+                  reading.Stop = time.Now()
                 }
               } else {
                 reading.Stop = time.Now()

@@ -25,9 +25,11 @@ func StartTracking(db *gorm.DB) func(c echo.Context) error {
         if !db.Where("book_id = ? AND user_id = ?", id, user.ID).First(&userBook).RecordNotFound() {
           // stop reading if any is active
           if !db.Table("intervals").Joins("JOIN readings on intervals.reading_id = readings.id").Where("user_id = ? AND completed = ?", user.ID, false).Last(&interval).RecordNotFound() {
-            interval.Stop = time.Now()
-            db.Save(&interval)
-            fmt.Println("ENDING PREVIOUS READING")
+            if (interval.Stop.IsZero()) {
+              interval.Stop = time.Now()
+              db.Save(&interval)
+              fmt.Println("ENDING PREVIOUS READING")
+            }
           } else {
             fmt.Println("NO LAST TRACKING")
           }

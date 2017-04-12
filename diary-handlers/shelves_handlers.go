@@ -67,8 +67,11 @@ func RemoveShelf(db *gorm.DB) func(c echo.Context) error {
 func EditShelf(db *gorm.DB) func(c echo.Context) error {
   return func(c echo.Context) error {
     editedShelf := &models.Shelf{}
+    currentShelf := models.Shelf{}
     if _, idErr := strconv.Atoi(c.Param("id")); idErr == nil {
       if err := c.Bind(editedShelf); err == nil {
+        db.Where("id = ?", editedShelf.ID).First(&currentShelf)
+        editedShelf.UserID = currentShelf.UserID
         db.Save(editedShelf)
         return c.JSON(http.StatusOK, editedShelf)
       } else {
