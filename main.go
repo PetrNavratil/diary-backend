@@ -114,5 +114,8 @@ func main() {
 
   e.GET("/intervals", diary_handlers.GetIntervals(db))
 
+  e.GET("/pdfBook/:id", diary_handlers.GenerateBookPdf(db))
+  e.GET("/pdfBooks/:status", diary_handlers.GenerateListOfBooks(db))
+
   e.Logger.Fatal(e.Start(":1323"))
 }

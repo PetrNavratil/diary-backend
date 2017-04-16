@@ -93,6 +93,7 @@ const (
   TO_READ
   READING
   READ
+  ALL
 )
 
 type BookComment struct {

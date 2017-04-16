@@ -60,7 +60,7 @@ func StartTracking(db *gorm.DB) func(c echo.Context) error {
           getReadings, _ := strconv.ParseBool(c.QueryParam("getReadings"))
           if getReadings {
             returnReading.LastInterval = lastInterval
-            returnReading.Readings = getUserBookReadings(db, user.ID, id)
+            returnReading.Readings = GetUserBookReadings(db, user.ID, id)
             return c.JSON(http.StatusOK, returnReading)
           } else {
             return c.JSON(http.StatusOK, lastInterval)
@@ -97,7 +97,7 @@ func StopTracking(db *gorm.DB) func(c echo.Context) error {
           getReadings, _ := strconv.ParseBool(c.QueryParam("getReadings"))
           if getReadings {
             returnReading.LastInterval = lastInterval
-            returnReading.Readings = getUserBookReadings(db, user.ID, id)
+            returnReading.Readings = GetUserBookReadings(db, user.ID, id)
             return c.JSON(http.StatusOK, returnReading)
           } else {
             return c.JSON(http.StatusOK, lastInterval)
@@ -121,7 +121,7 @@ func GetUserBookTracking(db *gorm.DB) func(c echo.Context) error {
     if user, err := GetUser(c, db); err == nil {
       if id, idErr := strconv.Atoi(c.Param("id")); idErr == nil {
         if !db.Where("id = ?", id).First(&book).RecordNotFound() {
-          readings = getUserBookReadings(db, user.ID, id)
+          readings = GetUserBookReadings(db, user.ID, id)
           return c.JSON(http.StatusOK, readings)
         } else {
           return c.JSON(http.StatusBadRequest, map[string]string{"message":  "Bad book id"})
@@ -160,7 +160,7 @@ func GetLastTracking(db *gorm.DB) func(c echo.Context) error {
   }
 }
 
-func getUserBookReadings(db *gorm.DB, userId int, bookId int) []models.Reading {
+func GetUserBookReadings(db *gorm.DB, userId int, bookId int) []models.Reading {
   readings := []models.Reading{}
   db.Where("user_id = ? AND book_id = ?", userId, bookId).Find(&readings)
   for i := range readings {
