@@ -52,9 +52,25 @@ func GetUsersBooks(db *gorm.DB) func(c echo.Context) error {
 func RemoveBookFromUser(db *gorm.DB) func(c echo.Context) error {
   return func(c echo.Context) error {
     returnBook := models.ReturnBook{}
+    book := models.Book{}
     if id, err := strconv.Atoi(c.Param("id")); err == nil {
       if user, err := GetUser(c, db); err == nil {
-        db.Where("user_id = ? AND  book_id = ?", user.ID, id).Delete(models.UserBook{})
+        db.First(&book, id)
+        fmt.Println("DELETING BOOK FROM SHELVES")
+        shelves := []models.Shelf{}
+        db.Model(&user).Related(&shelves, "Shelves")
+        for _, shelf := range shelves {
+          db.Model(&shelf).Association("Books").Delete(book)
+        }
+        // delete readings from user but let them to book to count how many times the book has been read so far
+        readings := []models.Reading{}
+        db.Where("user_id = ? AND book_id = ?", user.ID, book.ID).Find(&readings)
+        db.Model(&user).Association("Readings").Delete(readings)
+
+        userBook := models.UserBook{}
+        db.Where("user_id = ? AND book_id = ?", user.ID, id).First(&userBook)
+        db.Where("user_book_id = ?", userBook.ID).Delete(models.Educational{})
+        db.Delete(userBook)
         db.Table("books").Select("id, title, author, image_url").Where("id = ? ", id).Scan(&returnBook)
         returnBook.Status = models.NOT_READ
         return c.JSON(http.StatusOK, returnBook)
