@@ -5,7 +5,6 @@ import (
   "github.com/labstack/echo"
   "github.com/PetrNavratil/diary-back/models"
   "net/http"
-  "github.com/davecgh/go-spew/spew"
   "strconv"
 )
 
@@ -31,7 +30,6 @@ func CreateNewShelf(db *gorm.DB) func(c echo.Context) error {
     shelf := &models.Shelf{}
     if user, err := GetUser(c, db); err == nil {
       if shelfErr := c.Bind(shelf); shelfErr == nil {
-        spew.Dump(shelf)
         shelf.UserID = user.ID
         db.Create(shelf)
         shelf.Books = []models.Book{}

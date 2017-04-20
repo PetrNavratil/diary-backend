@@ -26,7 +26,7 @@ func getAllBoks(db *gorm.DB) func(c echo.Context) error {
 func main() {
 
   db, _ := gorm.Open("sqlite3", "gorm.db")
-  db.LogMode(true)
+  //db.LogMode(true)
   //db.DropTable(&models.User{})
   //db.DropTable(&models.Book{})
   //db.DropTable(&models.UserBook{})
@@ -50,12 +50,16 @@ func main() {
   defer db.Close()
 
   e := echo.New()
+  e.Static("/images", "images")
   e.Use(middleware.CORS())
 
   config := middleware.JWTConfig{
     SigningKey: []byte("diarySecret"),
     Skipper: func(c echo.Context) bool {
-      if (strings.Compare("/register", c.Path()) == 0 || strings.Compare("/login", c.Path()) == 0 ) {
+      compare := func(path string) bool {
+        return strings.Compare(path, c.Path()) == 0
+      }
+      if (compare("/register") || compare("/login") || strings.Contains(c.Path(), "/images") ) {
         return true
       } else {
         return false
@@ -73,11 +77,12 @@ func main() {
   e.POST("/password", diary_handlers.ChangePassword(db))
   e.GET("/user", diary_handlers.GetLoggedUser(db))
   e.PUT("/user/:id", diary_handlers.EditUser(db))
+  e.POST("/user/avatar", diary_handlers.UploadAvatar(db))
 
 
 
   // gets GR book
-  e.GET("/book-detail/:id", diary_handlers.GetGRBook(db))
+  e.GET("/book-detail/:id", diary_handlers.GetBook(db))
   e.GET("/search", diary_handlers.SearchGRBooks())
 
 
@@ -90,6 +95,7 @@ func main() {
   e.PUT("/books/:id", diary_handlers.UpdateUserBookDetail(db))
   e.GET("/books/:id", diary_handlers.GetUserBookDetail(db))
   e.GET("/books", diary_handlers.GetUsersBooks(db))
+  e.GET("/books/latest", diary_handlers.GetLatestBooks(db))
 
   e.GET("/comments", diary_handlers.GetBookComments(db))
   e.POST("/comments", diary_handlers.AddBookComment(db))

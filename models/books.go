@@ -1,6 +1,9 @@
 package models
 
-import "time"
+import (
+  "time"
+  "github.com/PetrNavratil/diary-back/goodreads"
+)
 
 type Book struct {
   ID           int `json:"id"`
@@ -10,11 +13,12 @@ type Book struct {
   ISBN13       string `json:"isbn13"`
   ImageUrl     string `json:"imageUrl"`
   GRBookId     int `json:"grBookId"`
-  GoogleBookId int `json:"googleBookId"`
+  GoogleBookId string `json:"googleBookId"`
   UserBook     []UserBook `json:"-" gorm:"ForeignKey:BookID"`
   Comments     []Comment `json:"-" gorm:"ForeignKey:BookID"`
   Trackings    []Tracking `json:"-" gorm:"ForeignKey:BookID"`
   Readings     []Reading `json:"-" gorm:"ForeignKey:BookID"`
+  CreatedAt    time.Time
 }
 
 type Comment struct {
@@ -193,4 +197,10 @@ type StatisticInterval struct {
   Title     string `json:"title"`
   Author    string `json:"author"`
   Completed bool `json:"completed"`
+}
+
+type BookInfo struct {
+  GoodReadsBook goodreads.GoodReadsBook `json:"goodReadsBook"`
+  GoogleBook    GoogleBook `json:"googleBook"`
+
 }

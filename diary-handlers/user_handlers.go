@@ -8,6 +8,10 @@ import (
   "net/http"
   "errors"
   "strconv"
+  "os"
+  "io"
+  "fmt"
+  "github.com/kennygrant/sanitize"
 )
 
 func GetUser(c echo.Context, db *gorm.DB) (models.User, error) {
@@ -52,6 +56,49 @@ func EditUser(db *gorm.DB) func(c echo.Context) error {
       }
     } else {
       return c.JSON(http.StatusBadRequest, map[string]string{"message":  "Bad user id"})
+    }
+  }
+}
+
+func UploadAvatar(db *gorm.DB) func(c echo.Context) error {
+  return func(c echo.Context) error {
+    if user, err := GetUser(c, db); err == nil {
+      // get file from request
+      file, err := c.FormFile("file")
+      if err != nil {
+        fmt.Println("getting file")
+        return err
+      }
+      // open if
+      src, err := file.Open()
+      if err != nil {
+        fmt.Println("opening file")
+        return err
+      }
+      defer src.Close()
+
+      fileName := fmt.Sprintf("images/%d_%s", user.ID, sanitize.Name(file.Filename))
+      // Destination
+      dst, err := os.Create(fileName)
+      if err != nil {
+        fmt.Println("creating file")
+        return err
+      }
+      defer dst.Close()
+
+      // copy
+      if _, err = io.Copy(dst, src); err != nil {
+        fmt.Println("copying file file")
+        return err
+      }
+      if len(user.Avatar) > 0 && user.Avatar != fileName {
+        os.Remove(user.Avatar)
+      }
+      user.Avatar = fileName
+      db.Save(&user)
+      return c.JSON(http.StatusOK, user)
+    } else {
+      return c.JSON(http.StatusBadRequest, map[string]string{"message":  err.Error()})
     }
   }
 }

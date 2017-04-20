@@ -6,7 +6,6 @@ import (
   "net/http"
   "github.com/PetrNavratil/diary-back/models"
   "strconv"
-  "github.com/davecgh/go-spew/spew"
 )
 
 func GetBookComments(db *gorm.DB) func(c echo.Context) error {
@@ -42,7 +41,6 @@ func AddBookComment(db *gorm.DB) func(c echo.Context) error {
         db.Table("comments").Where("book_id = ? AND user_id = ?", comment.BookID, comment.UserID).Joins("JOIN users on users.id = comments.user_id").
           Select("comments.id, comments.book_id, comments.text, comments.date, users.avatar, users.user_name, users.id as user_id").
           Scan(&commentResponse)
-        spew.Dump(commentResponse)
         return c.JSON(http.StatusOK, commentResponse)
       } else {
         return c.JSON(http.StatusBadRequest, map[string]string{"message":  "BAD comment body"})

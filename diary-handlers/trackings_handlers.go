@@ -8,7 +8,6 @@ import (
   "github.com/PetrNavratil/diary-back/models"
   "time"
   "fmt"
-  "github.com/davecgh/go-spew/spew"
 )
 
 func StartTracking(db *gorm.DB) func(c echo.Context) error {
@@ -143,7 +142,6 @@ func GetLastTracking(db *gorm.DB) func(c echo.Context) error {
     if user, err := GetUser(c, db); err == nil {
       db.Table("intervals").Joins("JOIN readings on intervals.reading_id = readings.id").Where("user_id = ?", user.ID).Last(&lastInterval.Interval)
       db.Where("id = ?", lastInterval.ReadingID).First(&reading)
-      spew.Dump(reading)
       db.Where("id = ?", reading.BookID).First(&book)
       lastInterval.Author = book.Author
       lastInterval.Title = book.Title

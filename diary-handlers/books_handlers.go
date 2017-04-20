@@ -7,7 +7,6 @@ import (
   "fmt"
   "github.com/jinzhu/gorm"
   "github.com/labstack/echo"
-  "github.com/davecgh/go-spew/spew"
   "time"
 )
 
@@ -86,7 +85,6 @@ func GetUserBookDetail(db *gorm.DB) func(c echo.Context) error {
           db.Model(&userBook).Related(&returnBook.Educational)
           month := fmt.Sprintf("%02d", int(time.Now().Month()))
           db.Where("user_id = ? AND strftime('%m', created_at) = ?", loggedUser.ID, month).Find(&userBooks);
-          spew.Dump(userBooks)
           return c.JSON(http.StatusOK, returnBook)
         }
         return c.JSON(http.StatusOK, returnBook)
