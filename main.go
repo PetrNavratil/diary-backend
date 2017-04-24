@@ -26,7 +26,7 @@ func getAllBoks(db *gorm.DB) func(c echo.Context) error {
 func main() {
 
   db, _ := gorm.Open("sqlite3", "gorm.db")
-  //db.LogMode(true)
+  db.LogMode(true)
   //db.DropTable(&models.User{})
   //db.DropTable(&models.Book{})
   //db.DropTable(&models.UserBook{})
@@ -54,12 +54,12 @@ func main() {
   e.Use(middleware.CORS())
 
   config := middleware.JWTConfig{
-    SigningKey: []byte("diarySecret"),
+    SigningKey: []byte("x6gcPcqZkeG9wnjWh4I1_GKfKNMnAGuXS2m6oPUoeqM4nOATs2TKbsJvoS5cYPIU"),
     Skipper: func(c echo.Context) bool {
       compare := func(path string) bool {
         return strings.Compare(path, c.Path()) == 0
       }
-      if (compare("/register") || compare("/login") || strings.Contains(c.Path(), "/images") ) {
+      if (compare("/new") || strings.Contains(c.Path(), "/images") ) {
         return true
       } else {
         return false
@@ -72,9 +72,6 @@ func main() {
   e.GET("/", func(c echo.Context) error {
     return c.JSON(http.StatusNotFound, map[string]string{"message":  "Don't look around"})
   })
-  e.POST("/login", diary_handlers.Login(db))
-  e.POST("/register", diary_handlers.Register(db))
-  e.POST("/password", diary_handlers.ChangePassword(db))
   e.GET("/user", diary_handlers.GetLoggedUser(db))
   e.PUT("/user/:id", diary_handlers.EditUser(db))
   e.POST("/user/avatar", diary_handlers.UploadAvatar(db))
@@ -122,6 +119,8 @@ func main() {
 
   e.GET("/pdfBook/:id", diary_handlers.GenerateBookPdf(db))
   e.GET("/pdfBooks/:status", diary_handlers.GenerateListOfBooks(db))
+
+  e.POST("/new", diary_handlers.NewUser(db))
 
   e.Logger.Fatal(e.Start(":1323"))
 }

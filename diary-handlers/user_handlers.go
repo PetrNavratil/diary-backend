@@ -17,9 +17,9 @@ import (
 func GetUser(c echo.Context, db *gorm.DB) (models.User, error) {
   jwtContext := c.Get("user").(*jwt.Token)
   claims := jwtContext.Claims.(jwt.MapClaims)
-  id := claims["id"]
+  id := claims["sub"].(string)
   user := models.User{}
-  if (db.Where("id = ?", id).First(&user).RecordNotFound()) {
+  if (db.Where("auth_id = ?", id).First(&user).RecordNotFound()) {
     return user, errors.New("NOT FOUND")
   } else {
     return user, nil

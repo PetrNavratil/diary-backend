@@ -41,8 +41,8 @@ type CommentResponse struct {
 
 type User struct {
   ID        int `json:"id"`
+  AuthID    string `json:"-"`
   UserName  string `gorm:"index" gorm:"unique" json:"userName"`
-  Password  string `json:"-"`
   Email     string `json:"email"`
   FirstName string `json:"firstName"`
   LastName  string `json:"lastName"`
@@ -168,11 +168,6 @@ type LastInterval struct {
 type ReturnReading struct {
   LastInterval LastInterval `json:"lastInterval"`
   Readings     []Reading `json:"readings"`
-}
-
-type PasswordChange struct {
-  OldPassword string `json:"oldPassword"`
-  NewPassword string `json:"newPassword"`
 }
 
 type Statistic struct {
