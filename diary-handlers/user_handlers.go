@@ -43,7 +43,7 @@ func EditUser(db *gorm.DB) func(c echo.Context) error {
     if id, idErr := strconv.Atoi(c.Param("id")); idErr == nil {
       if bodyError := c.Bind(&updatedUser); bodyError == nil {
         if !db.Where("id = ?", id).First(&currentUser).RecordNotFound() {
-          currentUser.Email = updatedUser.Email
+          currentUser.UserName = updatedUser.UserName
           currentUser.LastName = updatedUser.LastName
           currentUser.FirstName = updatedUser.FirstName
           db.Save(&currentUser)

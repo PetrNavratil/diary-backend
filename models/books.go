@@ -22,21 +22,21 @@ type Book struct {
 }
 
 type Comment struct {
-  ID     int `json:"id"`
-  BookID int `json:"bookId"`
-  UserID int `json:"userId"`
-  Text   string `json:"text"`
-  Date   string `json:"date"`
+  ID        int `json:"id"`
+  BookID    int `json:"bookId"`
+  UserID    int `json:"userId"`
+  Text      string `json:"text"`
+  CreatedAt time.Time `json:"-"`
+  UpdatedAt time.Time`json:"-"`
 }
 
 type CommentResponse struct {
-  ID       int `json:"id"`
-  BookID   int `json:"bookId"`
-  Text     string `json:"text"`
-  Date     string `json:"date"`
-  Avatar   string `json:"userAvatar"`
-  UserName string `json:"userName"`
-  UserId   int `json:"userId"`
+  Comment
+  Avatar    string `json:"userAvatar"`
+  UserName  string `json:"userName"`
+  FirstName string `json:"firstName"`
+  LastName  string `json:"lastName"`
+  Date      time.Time `json:"date"`
 }
 
 type User struct {
@@ -86,7 +86,6 @@ type FriendResponse struct {
   ShelvesCount int `json:"shelvesCount"`
   Books        []ReturnBook `json:"books"`
   Shelves      []Shelf `json:"shelves"`
-
 }
 
 type UserBook struct {
@@ -233,5 +232,4 @@ type StatisticInterval struct {
 type BookInfo struct {
   GoodReadsBook goodreads.GoodReadsBook `json:"goodReadsBook"`
   GoogleBook    GoogleBook `json:"googleBook"`
-
 }

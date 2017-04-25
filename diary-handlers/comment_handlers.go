@@ -17,8 +17,15 @@ func GetBookComments(db *gorm.DB) func(c echo.Context) error {
         return c.JSON(http.StatusOK, comments)
       }
       db.Table("comments").Where("book_id = ?", book.ID).Joins("JOIN users on users.id = comments.user_id").
-        Select("comments.id, comments.book_id, comments.text, comments.date, users.avatar, users.user_name, users.id as user_id").
+        Select("comments.id, comments.book_id, comments.text, users.avatar, users.user_name, users.last_name, users.first_name, users.id as user_id, comments.created_at, comments.updated_at").
         Scan(&comments)
+      for i := range comments {
+        if comments[i].UpdatedAt.IsZero() {
+          comments[i].Date = comments[i].UpdatedAt
+        } else {
+          comments[i].Date = comments[i].CreatedAt
+        }
+      }
       return c.JSON(http.StatusOK, comments)
     } else {
       return c.JSON(http.StatusBadRequest, map[string]string{"message":  err.Error()})
@@ -36,11 +43,11 @@ func AddBookComment(db *gorm.DB) func(c echo.Context) error {
         comment.BookID = newComment.BookId
         comment.UserID = user.ID
         comment.Text = newComment.Text
-        comment.Date = newComment.Date
         db.Create(&comment)
         db.Table("comments").Where("book_id = ? AND user_id = ?", comment.BookID, comment.UserID).Joins("JOIN users on users.id = comments.user_id").
-          Select("comments.id, comments.book_id, comments.text, comments.date, users.avatar, users.user_name, users.id as user_id").
+          Select("comments.id, comments.book_id, comments.text, users.avatar, users.user_name, users.last_name, users.first_name, users.id as user_id, comments.created_at, comments.updated_at").
           Scan(&commentResponse)
+        commentResponse.Date = commentResponse.CreatedAt
         return c.JSON(http.StatusOK, commentResponse)
       } else {
         return c.JSON(http.StatusBadRequest, map[string]string{"message":  "BAD comment body"})
@@ -60,7 +67,7 @@ func DeleteBookComment(db *gorm.DB) func(c echo.Context) error {
         return c.JSON(http.StatusBadRequest, map[string]string{"message":  "bad comment id"})
       } else {
         db.Table("comments").Where("book_id = ? AND user_id = ?", comment.BookID, comment.UserID).Joins("JOIN users on users.id = comments.user_id").
-          Select("comments.id, comments.book_id, comments.text, comments.date, users.avatar, users.user_name, users.id").
+          Select("comments.id, comments.book_id, comments.text, users.avatar, users.user_name, users.id").
           Scan(&commentResponse)
         db.Delete(&comment)
         return c.JSON(http.StatusOK, commentResponse)
@@ -81,8 +88,8 @@ func UpdateBookComment(db *gorm.DB) func(c echo.Context) error {
       } else {
         if bodyError := c.Bind(commentBody); bodyError == nil {
           comment.Text = commentBody.Text
-          comment.Date = commentBody.Date
           db.Save(&comment)
+          commentBody.Date = comment.UpdatedAt
           return c.JSON(http.StatusOK, commentBody)
         } else {
           return c.JSON(http.StatusBadRequest, map[string]string{"message":  "BAD comment body"})
