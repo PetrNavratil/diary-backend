@@ -51,6 +51,42 @@ type User struct {
   Shelves   []Shelf `json:"-"`
   Trackings []Tracking `json:"-" gorm:"ForeignKey:UserID"`
   Readings  []Reading `json:"-" gorm:"ForeignKey:UserID"`
+  Friends   []Friend `json:"-"`
+  Requests  []FriendRequest `json:"-"`
+}
+
+type Friend struct {
+  ID        int  `json:"-"`
+  UserID    int `json:"-"`
+  FriendID  int `json:"id"`
+  CreatedAt time.Time `json:"since"`
+}
+
+type FriendRequest struct {
+  ID          int `json:"id"`
+  UserID      int `json:"-"`
+  RequesterID int `json:"-"`
+}
+
+type FriendRequestResponse struct {
+  FriendRequest
+  UserName  string `json:"userName"`
+  FirstName string `json:"firstName"`
+  LastName  string `json:"lastName"`
+  Avatar    string `json:"avatar"`
+}
+
+type FriendResponse struct {
+  Friend
+  UserName     string `json:"userName"`
+  FirstName    string `json:"firstName"`
+  LastName     string `json:"lastName"`
+  Avatar       string `json:"avatar"`
+  BooksCount   int `json:"booksCount"`
+  ShelvesCount int `json:"shelvesCount"`
+  Books        []ReturnBook `json:"books"`
+  Shelves      []Shelf `json:"shelves"`
+
 }
 
 type UserBook struct {

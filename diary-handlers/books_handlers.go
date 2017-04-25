@@ -40,7 +40,7 @@ func GetUsersBooks(db *gorm.DB) func(c echo.Context) error {
     returnBooks := []models.ReturnBook{}
     if user, err := GetUser(c, db); err == nil {
       db.Table("books").Select(
-        "books.id, books.title, books.author, books.image_url, user_book.in_books, user_book.status, user_book.in_books, user_book.created_at").
+        "books.id, books.title, books.author, books.image_url, user_book.in_books, user_book.status").
         Joins("JOIN user_book ON user_book.book_id = books.id").Where("user_id = ?", user.ID).Scan(&returnBooks)
       return c.JSON(http.StatusOK, returnBooks)
     } else {

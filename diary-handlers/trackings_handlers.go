@@ -141,15 +141,17 @@ func GetLastTracking(db *gorm.DB) func(c echo.Context) error {
     lastInterval := models.LastInterval{}
     if user, err := GetUser(c, db); err == nil {
       db.Table("intervals").Joins("JOIN readings on intervals.reading_id = readings.id").Where("user_id = ?", user.ID).Last(&lastInterval.Interval)
-      db.Where("id = ?", lastInterval.ReadingID).First(&reading)
-      db.Where("id = ?", reading.BookID).First(&book)
-      lastInterval.Author = book.Author
-      lastInterval.Title = book.Title
-      lastInterval.BookID = book.ID
-      if lastInterval.Stop.IsZero() {
-        lastInterval.Completed = false
-      } else {
-        lastInterval.Completed = true
+      if lastInterval.ID > 0 {
+        db.Where("id = ?", lastInterval.ReadingID).First(&reading)
+        db.Where("id = ?", reading.BookID).First(&book)
+        lastInterval.Author = book.Author
+        lastInterval.Title = book.Title
+        lastInterval.BookID = book.ID
+        if lastInterval.Stop.IsZero() {
+          lastInterval.Completed = false
+        } else {
+          lastInterval.Completed = true
+        }
       }
       return c.JSON(http.StatusOK, lastInterval)
     } else {

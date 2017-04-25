@@ -36,7 +36,9 @@ func main() {
   //db.DropTable(&models.Tracking{})
   //db.DropTable(&models.Reading{})
   //db.DropTable(&models.Interval{})
-  //
+  //db.DropTable(&models.Friend{})
+  //db.DropTable(&models.FriendRequest{})
+  ////
   //db.CreateTable(&models.User{})
   //db.CreateTable(&models.Book{})
   //db.CreateTable(&models.UserBook{})
@@ -46,6 +48,8 @@ func main() {
   //db.CreateTable(&models.Tracking{})
   //db.CreateTable(&models.Reading{})
   //db.CreateTable(&models.Interval{})
+  //db.CreateTable(&models.Friend{})
+  //db.CreateTable(&models.FriendRequest{})
 
   defer db.Close()
 
@@ -121,6 +125,16 @@ func main() {
   e.GET("/pdfBooks/:status", diary_handlers.GenerateListOfBooks(db))
 
   e.POST("/new", diary_handlers.NewUser(db))
+
+  e.GET("/friends", diary_handlers.GetFriends(db))
+  e.GET("/friends/:id", diary_handlers.GetFriend(db))
+  e.DELETE("/friends/:id", diary_handlers.RemoveFriend(db))
+  e.GET("/friends/requests", diary_handlers.GetUserFriendRequests(db))
+  e.POST("/friends/requests/:id", diary_handlers.AddUserFriendRequest(db))
+  e.POST("/friends/requests/:id/accept", diary_handlers.AcceptFriendRequest(db))
+  e.POST("/friends/requests/:id/decline", diary_handlers.DeclineFriendRequest(db))
+
+  e.GET("/people", diary_handlers.GetPeople(db))
 
   e.Logger.Fatal(e.Start(":1323"))
 }
