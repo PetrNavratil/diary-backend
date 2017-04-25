@@ -64,8 +64,8 @@ type Friend struct {
 
 type FriendRequest struct {
   ID          int `json:"id"`
-  UserID      int `json:"-"`
-  RequesterID int `json:"-"`
+  UserID      int `json:"userId"`
+  RequesterID int `json:"requesterId"`
 }
 
 type FriendRequestResponse struct {

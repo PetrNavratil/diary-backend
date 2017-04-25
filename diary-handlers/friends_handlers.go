@@ -10,14 +10,21 @@ import (
 
 func GetUserFriendRequests(db *gorm.DB) func(c echo.Context) error {
   return func(c echo.Context) error {
-    requests := []models.FriendRequestResponse{}
+    incomingRequests := []models.FriendRequestResponse{}
+    outgoingRequests := []models.FriendRequestResponse{}
     if user, err := GetUser(c, db); err == nil {
       db.Table("friend_requests").
-        Select("friend_requests.id as id,user_name,first_name,last_name,avatar").
+        Select("friend_requests.id as id,user_name,first_name,last_name,avatar, requester_id, user_id").
         Joins("JOIN users ON friend_requests.requester_id = users.id").
         Where("user_id = ? ", user.ID).
-        Scan(&requests)
-      return c.JSON(http.StatusOK, requests)
+        Scan(&incomingRequests)
+      db.Table("friend_requests").
+        Select("friend_requests.id as id,user_name,first_name,last_name,avatar, requester_id, user_id").
+        Joins("JOIN users ON friend_requests.user_id = users.id").
+        Where("requester_id = ? ", user.ID).
+        Scan(&outgoingRequests)
+
+      return c.JSON(http.StatusOK, append(incomingRequests, outgoingRequests...))
     } else {
       return c.JSON(http.StatusBadRequest, map[string]string{"message":  err.Error()})
     }
@@ -34,7 +41,13 @@ func AddUserFriendRequest(db *gorm.DB) func(c echo.Context) error {
             request.UserID = id
             request.RequesterID = user.ID
             db.Save(&request)
-            return c.JSON(http.StatusOK, request)
+            outgoingRequest := models.FriendRequestResponse{}
+            db.Table("friend_requests").
+              Select("friend_requests.id as id,user_name,first_name,last_name,avatar, requester_id, user_id").
+              Joins("JOIN users ON friend_requests.user_id = users.id").
+              Where("requester_id = ? AND user_id = ? ", request.RequesterID, request.UserID).
+              Scan(&outgoingRequest)
+            return c.JSON(http.StatusOK, outgoingRequest)
           } else {
             return c.JSON(http.StatusBadRequest, map[string]string{"message": "already requested"})
           }
@@ -80,6 +93,22 @@ func AcceptFriendRequest(db *gorm.DB) func(c echo.Context) error {
 }
 
 func DeclineFriendRequest(db *gorm.DB) func(c echo.Context) error {
+  return func(c echo.Context) error {
+    if id, err := strconv.Atoi(c.Param("id")); err == nil {
+      request := models.FriendRequest{}
+      if !db.First(&request, id).RecordNotFound() {
+        db.Delete(&request)
+        return c.JSON(http.StatusOK, request)
+      } else {
+        return c.JSON(http.StatusBadRequest, map[string]string{"message": "id of request is not valid"})
+      }
+    } else {
+      return c.JSON(http.StatusBadRequest, map[string]string{"message": "id must be specified"})
+    }
+  }
+}
+
+func DeleteFriendRequest(db *gorm.DB) func(c echo.Context) error {
   return func(c echo.Context) error {
     if id, err := strconv.Atoi(c.Param("id")); err == nil {
       request := models.FriendRequest{}
