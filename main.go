@@ -26,7 +26,7 @@ func getAllBoks(db *gorm.DB) func(c echo.Context) error {
 func main() {
 
   db, _ := gorm.Open("sqlite3", "gorm.db")
-  db.LogMode(true)
+  //db.LogMode(true)
   //db.DropTable(&models.User{})
   //db.DropTable(&models.Book{})
   //db.DropTable(&models.UserBook{})
@@ -38,8 +38,8 @@ func main() {
   //db.DropTable(&models.Interval{})
   //db.DropTable(&models.Friend{})
   //db.DropTable(&models.FriendRequest{})
-  ////
-  //db.CreateTable(&models.User{})
+  //////
+  ////db.CreateTable(&models.User{})
   //db.CreateTable(&models.Book{})
   //db.CreateTable(&models.UserBook{})
   //db.CreateTable(&models.Comment{})
@@ -107,6 +107,7 @@ func main() {
   e.POST("/shelves", diary_handlers.CreateNewShelf(db))
   e.DELETE("/shelves/:id", diary_handlers.RemoveShelf(db))
   e.PUT("/shelves/:id", diary_handlers.EditShelf(db))
+  e.POST("/shelves/:id/copy", diary_handlers.CopyShelf(db))
 
   e.POST("/shelves/:id", diary_handlers.AddBookToShelf(db))
   e.DELETE("/shelves/:id/:bookId", diary_handlers.RemoveBookFromShelf(db))

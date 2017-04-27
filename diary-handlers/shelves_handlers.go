@@ -6,6 +6,7 @@ import (
   "github.com/PetrNavratil/diary-back/models"
   "net/http"
   "strconv"
+  "fmt"
 )
 
 func GetUsersShelves(db *gorm.DB) func(c echo.Context) error {
@@ -126,6 +127,52 @@ func RemoveBookFromShelf(db *gorm.DB) func(c echo.Context) error {
       }
     } else {
       return c.JSON(http.StatusBadRequest, map[string]string{"message":  "FAIL"})
+    }
+  }
+}
+
+func CopyShelf(db *gorm.DB) func(c echo.Context) error {
+  return func(c echo.Context) error {
+    newShelf := &models.Shelf{}
+    existingShelf := models.Shelf{}
+    userBooks := []models.UserBook{}
+    if user, err := GetUser(c, db); err == nil {
+      if shelfId, bookIdErr := strconv.Atoi(c.Param("id")); bookIdErr == nil {
+        if !db.First(&existingShelf, shelfId).RecordNotFound() {
+          newShelf.UserID = user.ID
+          newShelf.Name = fmt.Sprintf("%s - %s", existingShelf.Name, user.UserName)
+          db.Save(&newShelf)
+          db.Model(&existingShelf).Related(&existingShelf.Books, "Books")
+          db.Model(&newShelf).Association("Books").Append(existingShelf.Books)
+          db.Where("user_id = ?", user.ID).Find(&userBooks)
+          shouldAdd := func(userBooks []models.UserBook, book models.Book) bool {
+            for _, userBook := range userBooks {
+              if userBook.BookID == book.ID {
+                return false
+              }
+            }
+            return true
+          }
+          for _, book := range existingShelf.Books {
+            if shouldAdd(userBooks, book) {
+              newBook := models.UserBook{
+                BookID: book.ID,
+                UserID: user.ID,
+                InBooks: true,
+                Status: models.NOT_READ,
+              }
+              db.Create(&newBook)
+            }
+          }
+          return c.JSON(http.StatusOK, map[string]string{"message":  "OK"})
+        } else {
+          return c.JSON(http.StatusBadRequest, map[string]string{"message":  "bad shelf id"})
+        }
+      } else {
+        return c.JSON(http.StatusBadRequest, map[string]string{"message":  "bad shelf id"})
+      }
+    } else {
+      return c.JSON(http.StatusBadRequest, map[string]string{"message":  err.Error()})
     }
   }
 }

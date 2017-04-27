@@ -14,6 +14,7 @@ import (
   "github.com/kennygrant/sanitize"
   "io/ioutil"
   "time"
+  "os"
 )
 
 func GenerateBookPdf(db *gorm.DB) func(c echo.Context) error {
@@ -44,18 +45,18 @@ func GenerateBookPdf(db *gorm.DB) func(c echo.Context) error {
             fmt.Println("NOT OK")
           }
           pdf.SetHeaderFunc(func() {
-            pdf.SetFont("Arial", "B", 16)
+            pdf.SetFont("helvetica", "B", 16)
             wd := pdf.GetStringWidth(bookInfo.Title) + 20
             pdf.SetX((210 - wd) / 2)
-            pdf.SetFillColor(0, 255, 125)
-            pdf.SetTextColor(255, 0, 0)
+            pdf.SetFillColor(95, 78, 63)
+            pdf.SetTextColor(217, 217, 217)
             pdf.CellFormat(wd, 10, bookInfo.Title, "1", 1, "MC", true, 0, "")
             pdf.Ln(5)
             pdf.Line(20, pdf.GetY(), pageWidth - 20, pdf.GetY())
             pdf.Ln(7)
           })
           pdf.SetFooterFunc(func() {
-            pdf.SetFont("Arial", "", 10)
+            pdf.SetFont("helvetica", "", 10)
             pdf.SetFillColor(255, 255, 255, )
             pdf.SetY(297 - 10)
             pdf.CellFormat(0, 10, bookInfo.Title, "T", 1, "MR", true, 0, "")
@@ -75,9 +76,9 @@ func GenerateBookPdf(db *gorm.DB) func(c echo.Context) error {
           }
 
           createRow := func(label, value string) {
-            pdf.SetFont("Arial", "B", 14)
+            pdf.SetFont("helvetica", "B", 14)
             pdf.CellFormat(labelWidth, pdf.PointConvert(14) + 3, tr(label + ":"), "", 0, "ML", false, 0, "")
-            pdf.SetFont("Arial", "", 14)
+            pdf.SetFont("helvetica", "", 14)
             // if image is still on the right side
             if imageY > pdf.GetY() {
               pdf.MultiCell(pageWidth - imageWidth - labelWidth - imageMargin, pdf.PointConvert(14) + 3, tr(value), "", "ML", false)
@@ -98,16 +99,16 @@ func GenerateBookPdf(db *gorm.DB) func(c echo.Context) error {
           db.Where("user_id = ? AND book_id = ?", loggedUser.ID, id).Find(&readings)
           if len(readings) > 0 {
             if (readings[len(readings) - 1].Completed) {
-              createRow("Přečteno", fmt.Sprintf("%dx", len(readings)))
+              createRow("Read", fmt.Sprintf("%dx", len(readings)))
             } else {
-              createRow("Přečteno", fmt.Sprintf("%dx", len(readings) - 1))
+              createRow("Read", fmt.Sprintf("%dx", len(readings) - 1))
             }
           }
 
           if !db.Where("user_id = ? AND book_id = ?", loggedUser.ID, id).First(&comment).RecordNotFound() {
-            createRow("Komentář", comment.Text)
+            createRow("Comment", comment.Text)
           } else {
-            createRow("Komentář", "Nemáte žádný komentář k této knize.")
+            createRow("Comment", "No comment for this book")
           }
 
           db.Where("user_id = ? AND book_id = ?", loggedUser.ID, id).First(&userBook)
@@ -115,21 +116,24 @@ func GenerateBookPdf(db *gorm.DB) func(c echo.Context) error {
           if len(userBook.Educational.Smer) > 0 {
             pdf.AddPage()
             imageY = 0
-            pdf.SetFont("Arial", "B", 15)
+            pdf.SetFont("helvetica", "B", 15)
             pdf.CellFormat(0, pdf.PointConvert(15) + 3, tr("Češtinářská část"), "", 0, "", false, 0, "")
             pdf.Ln(10)
-            createRow("Směr", userBook.Educational.Smer)
+            createRow("Smer", userBook.Educational.Smer)
             createRow("Druh", userBook.Educational.Druh)
-            createRow("Žánr", userBook.Educational.Zanr)
+            createRow("Zanr", userBook.Educational.Zanr)
             createRow("Forma", userBook.Educational.Forma)
             createRow("Jazyk", userBook.Educational.Jazyk)
             createRow("Postavy", userBook.Educational.Postavy)
             createRow("Obsah", userBook.Educational.Obsah)
-            createRow("Téma", userBook.Educational.Tema)
-            createRow("Hodnocení", userBook.Educational.Hodnoceni)
+            createRow("Tema", userBook.Educational.Tema)
+            createRow("Hodnoceni", userBook.Educational.Hodnoceni)
           }
-          pdf.OutputFileAndClose("test.pdf")
-          dat, _ := ioutil.ReadFile("test.pdf")
+
+          fileName := fmt.Sprintf("detail-%d.pdf", loggedUser.ID)
+          pdf.OutputFileAndClose(fileName)
+          dat, _ := ioutil.ReadFile(fileName)
+          os.Remove(fileName)
           return c.Blob(http.StatusOK, "application/pdf", dat)
         } else {
           return c.JSON(http.StatusNotFound, map[string]string{"message":  "FAIL"})
@@ -142,6 +146,7 @@ func GenerateBookPdf(db *gorm.DB) func(c echo.Context) error {
     }
   }
 }
+
 
 func GenerateListOfBooks(db *gorm.DB) func(c echo.Context) error {
   return func(c echo.Context) error {
@@ -156,19 +161,22 @@ func GenerateListOfBooks(db *gorm.DB) func(c echo.Context) error {
       if status, err := strconv.Atoi(c.Param("status")); err == nil {
         pdf := gofpdf.New("P", "mm", "A4", "")
         tr := pdf.UnicodeTranslatorFromDescriptor("cp1250")
+        pdf.SetFont("helvetica", "", 16)
+        fontSize := 16.0
+        pdf.SetFont("helvetica", "", fontSize)
         pdf.SetHeaderFunc(func() {
-          pdf.SetFont("Arial", "B", 16)
+          pdf.SetFont("helvetica", "B", 16)
           wd := pdf.GetStringWidth("Seznam knih") + 20
           pdf.SetX((210 - wd) / 2)
-          pdf.SetFillColor(0, 255, 125)
-          pdf.SetTextColor(255, 0, 0)
+          pdf.SetFillColor(95, 78, 63)
+          pdf.SetTextColor(217, 217, 217)
           pdf.CellFormat(wd, 10, "Seznam knih", "1", 1, "MC", true, 0, "")
           pdf.Ln(5)
           pdf.Line(20, pdf.GetY(), pageWidth - 20, pdf.GetY())
           pdf.Ln(7)
         })
         pdf.SetFooterFunc(func() {
-          pdf.SetFont("Arial", "", 10)
+          pdf.SetFont("helvetica", "", 10)
           pdf.SetFillColor(255, 255, 255, )
           pdf.SetY(297 - 10)
           pdf.CellFormat(0, 10, "Seznam knih " + time.Now().Format("Mon Jan _2 15:04:05 2006"), "T", 1, "MR", true, 0, "")
@@ -192,9 +200,9 @@ func GenerateListOfBooks(db *gorm.DB) func(c echo.Context) error {
         }
 
         writeRow := func(label, value string) {
-          pdf.SetFont("Arial", "B", 14)
+          pdf.SetFont("helvetica", "B", 14)
           pdf.CellFormat(labelWidth, pdf.PointConvert(14) + 3, tr(label + ":"), "", 0, "ML", false, 0, "")
-          pdf.SetFont("Arial", "", 14)
+          pdf.SetFont("helvetica", "", 14)
           pdf.MultiCell(pageWidth - imageWidth - labelWidth - imageMargin, pdf.PointConvert(14) + 3, tr(value), "", "ML", false)
         }
 
@@ -222,7 +230,7 @@ func GenerateListOfBooks(db *gorm.DB) func(c echo.Context) error {
             if status == models.READ || status == models.READING || status == models.ALL {
               var read int
               db.Table("readings").Where("user_id = ? AND book_id = ? AND completed = ?", loggedUser.ID, book.ID, true).Count(&read)
-              writeRow("Přečteno", fmt.Sprintf("%dx", read))
+              writeRow("Read", fmt.Sprintf("%dx", read))
             }
             pdf.SetY(newY)
             if item != 4 {
@@ -232,9 +240,10 @@ func GenerateListOfBooks(db *gorm.DB) func(c echo.Context) error {
             }
           }
         }
-
-        pdf.OutputFileAndClose("books.pdf")
-        dat, _ := ioutil.ReadFile("books.pdf")
+        fileName := fmt.Sprintf("books-%d.pdf", loggedUser.ID)
+        pdf.OutputFileAndClose(fileName)
+        dat, _ := ioutil.ReadFile(fileName)
+        os.Remove(fileName)
         return c.Blob(http.StatusOK, "application/pdf", dat)
       } else {
         return c.JSON(http.StatusNotFound, map[string]string{"message":  "FAIL"})
