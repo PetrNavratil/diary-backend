@@ -5,9 +5,10 @@ import (
   "github.com/labstack/echo"
   "github.com/PetrNavratil/diary-back/models"
   "net/http"
-  "github.com/davecgh/go-spew/spew"
 )
 
+// Adds new user to the database
+// Called from auth0
 func NewUser(db *gorm.DB) func(c echo.Context) error {
   return func(c echo.Context) error {
     var authUser  struct {
@@ -27,7 +28,6 @@ func NewUser(db *gorm.DB) func(c echo.Context) error {
     user.LastName = authUser.LastName
     user.Avatar = authUser.ImageUrl
     db.Create(&user)
-    spew.Dump(user)
     return c.HTML(http.StatusOK, "OK")
   }
 }

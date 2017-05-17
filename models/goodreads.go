@@ -1,6 +1,6 @@
-package goodreads
+package models
 
-// Get specific book models
+// Response sent when asked for book detail GR, GB
 type GoodReadsBook struct {
   Id               string  `xml:"book>id" json:"id"`
   Title            string  `xml:"book>title" json:"title"`

@@ -1,5 +1,6 @@
 package models
 
+// Sent when asked for Google book detail
 type GoogleBook struct {
   Title       string `json:"title"`
   Author      string `json:"author"`
